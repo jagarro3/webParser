@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Diarios disponibles</title>
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+</head>
+
+<body>
+    <br>
+    <form name="login-form" class="login-form" action="results.html" method="POST">
+        {% csrf_token %}
+        <div class="header">
+            <h1>Diarios</h1>
+            <span>Por favor, elija un diario</span>
+        </div>
+        <div class="content">
+            <label>Seleccione un diario</label>
+            <select name="selectOfNewspapers" class="form-control">
+                {% for newspaper in newspapers %}
+                <option value='{{ newspaper.value }}' selected="selected">{{ newspaper.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="footer">
+            <input class="button" type="submit" value="Seleccionar">
+        </div>
+    </form>
+</body>
+</html>
