@@ -1,32 +1,35 @@
-from django.db import models
-import pymongo
+from datetime import datetime
+
 import nltk
-nltk.download('stopwords')
-default_stopwords = set(nltk.corpus.stopwords.words('spanish'))
+import pymongo
+from django.db import models
+
 
 def getNews(col_name):
     connection = pymongo.MongoClient("mongodb://localhost:27017")
-    db = getattr(connection, col_name)
-    news = db.noticiasFake.find()
+    db = connection.periodicos
+    news = db[col_name].find().sort("fecha", pymongo.ASCENDING)
     return list(news)
 
-def getNewsGroupDate():
+def getNewsGroupDate(col_name):
     connection = pymongo.MongoClient("mongodb://localhost:27017")
-    db = connection.elPais
-    news = db.noticiasFake.aggregate([
+    db = connection.periodicos
+    news = db[col_name].aggregate([
         {
             "$group": {
-                "_id": {"fecha": "$fecha"},
+                "_id": {"$month": "$fecha"},
                 "count": {"$sum": 1},
                 "fecha": {"$first": "$fecha"},
-                "titulo": {"$push": '$titulo'}
+                "noticia": {"$push": '$titulo'}
             }
-        },
-        {
-            "$sort": {"fecha": 1}
         }
     ])
     return list(news)
+
+def getLenguageOfNewspaper(name):
+    connection = pymongo.MongoClient("mongodb://localhost:27017")
+    db = connection.periodicos
+    return list(db.disponibles.find({'value': name}))
 
 def getNewspapers():
     connection = pymongo.MongoClient("mongodb://localhost:27017")

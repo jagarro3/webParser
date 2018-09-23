@@ -6,11 +6,18 @@
     <meta charset="UTF-8">
     <title>Resultados</title>
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 </head>
 
 <body style="text-align: center;">
     <br>
-    <span>{{ periodicoSeleccionado }}</span>
+    <!-- <span>{{ periodicoSeleccionado }}</span> -->
+    {% for o in periodicoSeleccionado %}
+    <span>{{ o }}</span>
+    <br> {% endfor %}
+
+
 </body>
 
 </html>
