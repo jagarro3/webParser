@@ -37,6 +37,17 @@ def getNewspapers():
     newspapers = db.disponibles.find()
     return list(newspapers)
 
+def getNewsByRangeDate(fromDate, toDate, col_name):
+    # Convertir string en Datetime
+    start = datetime.strptime(fromDate.strip(), '%m/%d/%Y')
+    end = datetime.strptime(toDate.strip(), '%m/%d/%Y')
+
+    # Consulta filtrada por fecha
+    connection = pymongo.MongoClient("mongodb://localhost:27017")
+    db = connection.periodicos
+    newspapers = db[col_name].find({'fecha': {'$lt': end, '$gt': start}})
+    return list(newspapers)
+
 class Question(models.Model):
     question_text = models.CharField(max_length=200)
     pub_date = models.DateTimeField('date published')

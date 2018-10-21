@@ -8,9 +8,28 @@
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
     <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css"> -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
         crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>
+
+    <!-- Script para el datepicker -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 </head>
+<script>
+    $(function () {
+        $('input[name="daterange"]').daterangepicker({
+            opens: 'left'
+        });
+    });
+</script>
 
 <body>
     <div class="login-body">
@@ -21,14 +40,27 @@
                 <span>Por favor, elija un diario</span>
             </div>
 
+            <!-- Eleccion periodico -->
             <div class="content">
-                <label>Seleccione un diario</label>
-                <select name="selectOfNewspapers" class="form-control">
-                    {% for newspaper in newspapers %}
-                    <option value='{{ newspaper.value }}' selected="selected">{{ newspaper.nombre }}</option>
-                    {% endfor %}
-                </select>
+                <div class="row">
+                    <div class="col">
+                        <label>Seleccione un diario</label>
+                        <select name="selectOfNewspapers" class="form-control">
+                            {% for newspaper in newspapers %}
+                            <option value='{{ newspaper.value }}' selected="selected">{{ newspaper.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 5px;">
+                    <div class="col">
+                        <label>Rango de fechas</label>
+                        <input type="text" name="daterange" class="form-control"/>
+                    </div>
+                </div>
             </div>
+
+
 
             <div class="footer">
                 <input class="button" type="submit" value="Seleccionar">
