@@ -33,10 +33,15 @@
                 <h1 class="page-header">Datos en crudo</h1>
             </div>
             <div class="col-md-12">
-                <span><strong>Total palabras (articulos):</strong> {{ numeroPalabrasNoticia }}</span><br>
-                <span><strong>Total palabras (titulos):</strong> {{ numeroPalabrasTitulo }}</span><br>
-                <span><strong>Número de noticias:</strong> {{ numeroNoticias }}</span>
-                
+                <span>
+                    <strong>Total palabras (articulos):</strong> {{ numeroPalabrasNoticia }}</span>
+                <br>
+                <span>
+                    <strong>Total palabras (titulos):</strong> {{ numeroPalabrasTitulo }}</span>
+                <br>
+                <span>
+                    <strong>Número de noticias:</strong> {{ numeroNoticias }}</span>
+
             </div>
         </div>
 
@@ -57,7 +62,7 @@
                         </span>
                     </div>
                     <div class="panel-body">
-                        {{ div1 | safe }}
+                        <img style="height: 300px;width: 512px" src="../../static/img/wordcloud.jpg" alt="wordcloud">
                     </div>
                 </div>
             </div>
@@ -227,11 +232,6 @@
     <!--/.main-->
 
     {% endblock %}
-    <!-- <br>
-    {% for o in periodicoSeleccionado %}
-    <span>{{ o }}</span>
-    <br> {% endfor %} -->
-
 
 </body>
 

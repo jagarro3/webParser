@@ -16,6 +16,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize, ToktokTokenizer
 import time
 from wordcloud import WordCloud
+import os
 
 # Stopworks
 stop_wordsEN = stopwords.words('english')
@@ -45,10 +46,13 @@ def getResults(request):
     selectNewspaper = request.POST['selectOfNewspapers']
     fromDate = request.POST['daterange'].split('-')[0]
     toDate = request.POST['daterange'].split('-')[1]
+    language = models.getLenguageOfNewspaper(selectNewspaper)[0]['idioma']
     articlesRaw = getArticlesRaw(fromDate, toDate, selectNewspaper)
-
+    textClean = cleanText(articlesRaw, 'noticia', language)
+    
     numWordsText, numWordsTitle, countArticles = getRawData(articlesRaw)
-    imageWordCloud = getWordCloud(articlesRaw)
+    imageWordCloud = getWordCloud(textClean)
+
     print("Imagen:", imageWordCloud)
     context = {
         'periodicoSeleccionado':  getStatistics(fromDate, toDate, selectNewspaper),
@@ -64,11 +68,11 @@ def getResults(request):
 
 # Obtener imagen WordCloud
 def getWordCloud(articles):
-    tokens = [word['titulo'].split() for word in articles]
-    print("ESTO", tokens)
-    wordcloud = WordCloud(max_font_size=40).generate(tokens)
-
-    wordcloud.to_file('static/wordcloud.jpg')
+    text = ' '.join(word for word in articles)
+    wordcloud = WordCloud(max_font_size=50).generate(text)
+    my_path = os.path.abspath(os.path.dirname(__file__))
+    path = os.path.join(my_path, "./static/img/wordcloud.jpg")
+    wordcloud.to_file(path)
     return ('wordcloud.jpg')
 
 # Obtener datos en crudo
@@ -87,20 +91,21 @@ def getArticlesRaw(fromDate, toDate, selectNewspaper):
     return models.getNewsByRangeDate(fromDate, toDate, selectNewspaper)
 
 def getStatistics(fromDate, toDate, newspaperSelected):
-    news = models.getNewsByRangeDate(fromDate, toDate, newspaperSelected)
-    # news = models.getNews(newspaperSelected)
-    language = models.getLenguageOfNewspaper(newspaperSelected)[0]['idioma']
-    listSorted = orderByMonthYear(news, 'noticia')
-    listCommon = []
-    start_time = time.time()
+    return 0
+    # news = models.getNewsByRangeDate(fromDate, toDate, newspaperSelected)
+    # # news = models.getNews(newspaperSelected)
+    # language = models.getLenguageOfNewspaper(newspaperSelected)[0]['idioma']
+    # listSorted = orderByMonthYear(news, 'noticia')
+    # listCommon = []
+    # start_time = time.time()
     
-    for k, v in listSorted.items():
-        listCommon.append({k: FreqDist(cleanText(v, language)).most_common(3)})
+    # for k, v in listSorted.items():
+    #     listCommon.append({k: FreqDist(cleanText(v, language)).most_common(3)})
 
-    elapsed_time = time.time() - start_time
-    print('Tiempo ejecución:', elapsed_time, 'segundos')
+    # elapsed_time = time.time() - start_time
+    # print('Tiempo ejecución:', elapsed_time, 'segundos')
     
-    return listCommon
+    # return listCommon
 
 def orderByMonthYear(listN, field):
     dicc = {}
@@ -112,10 +117,12 @@ def orderByMonthYear(listN, field):
     return dicc
 
 # Limpiar texto
-def cleanText(articles, language):
+def cleanText(articles, field, language):
+    tokens = []
     # Tokenizar
     for x in articles:
-        tokens = [toktok.tokenize(y) for y in sent_tokenize(x)]
+        for y in sent_tokenize(x[field]):
+            tokens.append(toktok.tokenize(y))
     # Flat list   
     tokens = [item for sublist in tokens for item in sublist]    
     # Minusculas
