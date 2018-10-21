@@ -11,11 +11,226 @@
 </head>
 
 <body style="text-align: center;">
-    <br>
-    <!-- <span>{{ periodicoSeleccionado }}</span> -->
+    {% block content %}
+    <div class="col-sm-12 col-lg-12 main">
+        <div class="row">
+            <ol class="breadcrumb">
+                <li class="active">
+                    <span>
+                        Estadísticas del periodico:
+                        <strong>{{ nombrePeriodico }} </strong>
+                        desde el
+                        <strong>{{ rangoDesde }}</strong> hasta el
+                        <strong>{{ rangoHasta }}</strong>
+                    </span>
+                </li>
+            </ol>
+        </div>
+
+        <!-- Datos en crudo -->
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="page-header">Datos en crudo</h1>
+            </div>
+            <div class="col-md-12">
+                <span><strong>Total palabras (articulos):</strong> {{ numeroPalabrasNoticia }}</span><br>
+                <span><strong>Total palabras (titulos):</strong> {{ numeroPalabrasTitulo }}</span><br>
+                <span><strong>Número de noticias:</strong> {{ numeroNoticias }}</span>
+                
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Word Cloud
+                        <ul class="pull-right panel-settings panel-button-tab-right">
+                            <li class="dropdown">
+                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <em class="fa fa-cogs"></em>
+                                </a>
+                            </li>
+                        </ul>
+                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
+                            <em class="fa fa-toggle-up"></em>
+                        </span>
+                    </div>
+                    <div class="panel-body">
+                        {{ div1 | safe }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Frecuencia de palabras
+                        <ul class="pull-right panel-settings panel-button-tab-right">
+                            <li class="dropdown">
+                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <em class="fa fa-cogs"></em>
+                                </a>
+                            </li>
+                        </ul>
+                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
+                            <em class="fa fa-toggle-up"></em>
+                        </span>
+                    </div>
+                    <div class="panel-body">
+
+                        {{ div2 | safe }}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Idioma
+                        <ul class="pull-right panel-settings panel-button-tab-right">
+                            <li class="dropdown">
+                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <em class="fa fa-cogs"></em>
+                                </a>
+                            </li>
+                        </ul>
+                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
+                            <em class="fa fa-toggle-up"></em>
+                        </span>
+                    </div>
+                    <div class="panel-body">
+
+                        <img src="http://127.0.0.1:8000/static/{{ image2 }}" alt="frecuencias de idiomas">
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Análisis de sentimiento
+                        <ul class="pull-right panel-settings panel-button-tab-right">
+                            <li class="dropdown">
+                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <em class="fa fa-cogs"></em>
+                                </a>
+                            </li>
+                        </ul>
+                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
+                            <em class="fa fa-toggle-up"></em>
+                        </span>
+                    </div>
+                    <div class="panel-body">
+                        <img src="http://127.0.0.1:8000/static/{{ pieSentimental }}" alt="sentimental">
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6" style="height:500px ; width: 100%">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Polaridad de las palabras
+                        <ul class="pull-right panel-settings panel-button-tab-right">
+                            <li class="dropdown">
+                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <em class="fa fa-cogs"></em>
+                                </a>
+                            </li>
+                        </ul>
+                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
+                            <em class="fa fa-toggle-up"></em>
+                        </span>
+                    </div>
+                    <div class="panel-body" style="height: 400px;">
+                        <!--<img src="http://127.0.0.1:8000/static/{{ image }}"  alt="sentimental"> -->
+                        <!--<div w3-include-html="http://127.0.0.1:8000/static/table.html"></div> -->
+                        <iframe style="border: none;height: 370px;width: 100%" src="http://127.0.0.1:8000/static/table.html" seamless></iframe>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6" style="width: 100%">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Actividad a lo largo del tiempo
+                        <ul class="pull-right panel-settings panel-button-tab-right">
+                            <li class="dropdown">
+                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <em class="fa fa-cogs"></em>
+                                </a>
+                            </li>
+                        </ul>
+                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
+                            <em class="fa fa-toggle-up"></em>
+                        </span>
+                    </div>
+                    <div id="vis3" class="panel-body">
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Word Cloud
+                        <ul class="pull-right panel-settings panel-button-tab-right">
+                            <li class="dropdown">
+                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <em class="fa fa-cogs"></em>
+                                </a>
+                            </li>
+                        </ul>
+                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
+                            <em class="fa fa-toggle-up"></em>
+                        </span>
+                    </div>
+                    <img style="height: 300px;width: 512px" src="http://127.0.0.1:8000/static/{{ image3 }}" alt="wordcloud">
+
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Regiones activas
+                        <ul class="pull-right panel-settings panel-button-tab-right">
+                            <li class="dropdown">
+                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <em class="fa fa-cogs"></em>
+                                </a>
+                            </li>
+                        </ul>
+                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
+                            <em class="fa fa-toggle-up"></em>
+                        </span>
+                    </div>
+                    {{ div3 | safe }}
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <p class="back-link">
+                <a href="https://www.medialoot.com">Health Analytics</a>
+            </p>
+        </div>
+    </div>
+    <!--/.row-->
+    </div>
+    <!--/.main-->
+
+    {% endblock %}
+    <!-- <br>
     {% for o in periodicoSeleccionado %}
     <span>{{ o }}</span>
-    <br> {% endfor %}
+    <br> {% endfor %} -->
 
 
 </body>
