@@ -15,6 +15,7 @@ from nltk import FreqDist
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize, ToktokTokenizer
 import time
+from wordcloud import WordCloud
 
 # Stopworks
 stop_wordsEN = stopwords.words('english')
@@ -44,9 +45,46 @@ def getResults(request):
     selectNewspaper = request.POST['selectOfNewspapers']
     fromDate = request.POST['daterange'].split('-')[0]
     toDate = request.POST['daterange'].split('-')[1]
-    context = {'periodicoSeleccionado':  getStatistics(fromDate, toDate, selectNewspaper)}
+    articlesRaw = getArticlesRaw(fromDate, toDate, selectNewspaper)
+
+    numWordsText, numWordsTitle, countArticles = getRawData(articlesRaw)
+    imageWordCloud = getWordCloud(articlesRaw)
+    print("Imagen:", imageWordCloud)
+    context = {
+        'periodicoSeleccionado':  getStatistics(fromDate, toDate, selectNewspaper),
+        'nombrePeriodico': selectNewspaper,
+        'rangoDesde': fromDate,
+        'rangoHasta': toDate,
+        'numeroPalabrasNoticia': numWordsText,
+        'numeroPalabrasTitulo': numWordsTitle,
+        'numeroNoticias': countArticles,
+        'imagenWordCloud': imageWordCloud
+    }
     return HttpResponse(template.render(context, request))
 
+# Obtener imagen WordCloud
+def getWordCloud(articles):
+    tokens = [word['titulo'].split() for word in articles]
+    print("ESTO", tokens)
+    wordcloud = WordCloud(max_font_size=40).generate(tokens)
+
+    wordcloud.to_file('static/wordcloud.jpg')
+    return ('wordcloud.jpg')
+
+# Obtener datos en crudo
+def getRawData(articles):
+    countWordsText, countWordsTitle, countArticles  = 0, 0, 0
+
+    for x in articles:
+        countWordsText += len(x['noticia'].split())
+        countWordsTitle += len(x['titulo'].split())
+        countArticles += 1
+
+    return countWordsText, countWordsTitle, countArticles
+
+# Obtener las noticias en crudo
+def getArticlesRaw(fromDate, toDate, selectNewspaper):
+    return models.getNewsByRangeDate(fromDate, toDate, selectNewspaper)
 
 def getStatistics(fromDate, toDate, newspaperSelected):
     news = models.getNewsByRangeDate(fromDate, toDate, newspaperSelected)
@@ -73,6 +111,7 @@ def orderByMonthYear(listN, field):
             dicc[elem['fecha'].strftime("%Y-%m")] = [elem[field]]
     return dicc
 
+# Limpiar texto
 def cleanText(articles, language):
     # Tokenizar
     for x in articles:
