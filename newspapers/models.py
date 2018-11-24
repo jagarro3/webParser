@@ -45,7 +45,7 @@ def getNewsByRangeDate(fromDate, toDate, col_name):
     # Consulta filtrada por fecha
     connection = pymongo.MongoClient("mongodb://localhost:27017")
     db = connection.periodicos
-    newspapers = db[col_name].find({'fecha': {'$lt': end, '$gt': start}})
+    newspapers = db[col_name].find({'fecha': { '$lte': end, '$gte': start }})
     return list(newspapers)
 
 class Question(models.Model):
