@@ -20,10 +20,8 @@ from nltk.tokenize import ToktokTokenizer, sent_tokenize, word_tokenize
 from wordcloud import WordCloud
 from bokeh.plotting import figure, output_file, show
 from bokeh.embed import components
-
+from collections import OrderedDict
 from newspapers import models
-
-from .models import Choice, Question
 
 # Stopworks
 stop_wordsEN = stopwords.words('english')
@@ -48,7 +46,6 @@ class IndexView(generic.ListView):
 
 
 class ResultsView(generic.DetailView):
-    model = Question
     template_name = 'newspapers/results.html'
 
 def getResults(request):
@@ -68,12 +65,16 @@ def getResults(request):
     
     # Lista de noticias con el texto limpio
     articlesCleaned = cleanArticles(articlesRaw, 'noticia', language)
-    
+
     numWordsText, numWordsTitle, countArticles = getRawData(articlesRaw)
     imageWordCloud = getWordCloud(articlesCleaned)
     imageWordCloudBigrams = getWordCloudBigrams(articlesCleaned)
 
     scriptFrequency, divFrequency = graphFrequency(articlesCleaned)
+
+    # Gráfica con la palabra mas frecuente en cada fecha
+    diccDateArticles = orderByMonthYear(articlesRaw, 'noticia', language)
+    mostFrequenceWordPerDay = frequencyByDate(diccDateArticles)
 
     context = {
         # 'periodicoSeleccionado':  getStatistics(fromDate, toDate, selectNewspaper),
@@ -86,8 +87,11 @@ def getResults(request):
         'imagenWordCloud': imageWordCloud,
         'imagenWordCloudBigrams': imageWordCloudBigrams,
         'divFrequency': divFrequency,
-        'scriptFrequency': scriptFrequency
+        'scriptFrequency': scriptFrequency,
+        'mostFrequenceWordPerDay': mostFrequenceWordPerDay,
+        'articlesRaw': articlesRaw
     }
+
     return HttpResponse(template.render(context, request))
 
 def getWordCloudBigrams(articles):
@@ -108,6 +112,16 @@ def getWordCloudBigrams(articles):
 
     return ('wordcloudBigrams.jpg')
 
+# Obtener imagen WordCloud
+def getWordCloud(articles):
+    articles = [item for sublist in articles for item in sublist]  
+    fdist = FreqDist(articles)
+    wordcloud = WordCloud(background_color="white", width=1920, height=1080).fit_words(fdist)
+    my_path = os.path.abspath(os.path.dirname(__file__))
+    path = os.path.join(my_path, "./static/img/wordcloud.jpg")
+    wordcloud.to_file(path)
+    return ('wordcloud.jpg')
+
 # Obtener grafico de barras con las palabras mas frecuentes
 def graphFrequency(articles):
     articles = [item for sublist in articles for item in sublist]  
@@ -127,15 +141,17 @@ def graphFrequency(articles):
     scriptFrequency, graphFrequency = components(p)
     return scriptFrequency, graphFrequency
 
-# Obtener imagen WordCloud
-def getWordCloud(articles):
-    articles = [item for sublist in articles for item in sublist]  
-    fdist = FreqDist(articles)
-    wordcloud = WordCloud(background_color="white", width=1920, height=1080).fit_words(fdist)
-    my_path = os.path.abspath(os.path.dirname(__file__))
-    path = os.path.join(my_path, "./static/img/wordcloud.jpg")
-    wordcloud.to_file(path)
-    return ('wordcloud.jpg')
+# Obtener grafico de barras con la palabra mas frecuente de cada día
+def frequencyByDate(dicc):
+    diccPerDay = {}
+
+    for key, val in dicc.items():
+        text = [item for sublist in val for item in sublist]  
+        fdist = FreqDist(text)
+        word, count = fdist.most_common(1)[0]
+        diccPerDay[key] = word + ' (' +  str(count) + ')'
+    
+    return diccPerDay
 
 # Obtener datos en crudo
 def getRawData(articles):
@@ -152,17 +168,33 @@ def getRawData(articles):
 def getArticlesRaw(fromDate, toDate, categories, selectNewspaper):
     articles = models.getNewsByRangeDate(fromDate, toDate, selectNewspaper)
     articlesFiltered = []
+
     for article in articles:
         tags = ','.join(article['tags'])        
+
         if any(unicodedata.normalize('NFKD', word.lower()).encode('ASCII', 'ignore').decode() 
         in unicodedata.normalize('NFKD', tags.lower()).encode('ASCII', 'ignore').decode() 
         for word in categories):
             articlesFiltered.append(article)
+    
     return articlesFiltered
+
+# Diccionario con noticias por fecha
+def orderByMonthYear(listN, field, language):
+    dicc = {}
+
+    for elem in listN:
+        if elem['fecha'].strftime("%d-%m-%Y") in dicc:
+            dicc[elem['fecha'].strftime("%d-%m-%Y")] += cleanArticle(elem['noticia'], language)
+        else:
+            dicc[elem['fecha'].strftime("%d-%m-%Y")] = cleanArticle(elem['noticia'], language)
+            
+    return dicc
 
 # Noticias con el texto limpio
 def cleanArticles(articles, field, language):
     tokens, wordsStopWords = [], []
+    
     # Tokenizar
     for article in articles:
         tokens.append(toktok.tokenize(article[field]))
@@ -178,74 +210,20 @@ def cleanArticles(articles, field, language):
 
     return wordsStopWords
 
-# Limpiar texto
-def cleanText(articles, field, language):
-    tokens = []
+# Limpiar el texto de una sola noticia
+def cleanArticle(article, language):
+    tokens, wordsStopWords = [], []
+    
     # Tokenizar
-    for x in articles:
-        for y in sent_tokenize(x[field]):
-            tokens.append(toktok.tokenize(y))
-    # Flat list   
-    tokens = [item for sublist in tokens for item in sublist]    
-    # Minusculas
-    word = [word.lower() for word in tokens]
-    # Quitar numeros y signos
-    wordsUnsigned = [word for word in word if word.isalpha()]
-    # Stopworks
-    if language == 'ingles':
-        wordsStopWords = [word for word in wordsUnsigned if word not in stop_wordsEN]
-    else:
-        wordsStopWords = [word for word in wordsUnsigned if word not in stop_wordsES]
+    tokens.append(toktok.tokenize(article))
+    
+    for article in tokens:
+        # Minusculas y no numerico/signos
+        wordsUnsigned = [word.lower() for word in article if word.isalpha()]             
+        # Stopworks
+        if language == 'ingles':
+            wordsStopWords.append([word for word in wordsUnsigned if word not in stop_wordsEN])
+        else:
+            wordsStopWords.append([word for word in wordsUnsigned if word not in stop_wordsES])
 
     return wordsStopWords
-
-# Obtener nombres propios SIN USO
-# def getProperNames(articles):
-#     text = ' '.join(word for word in articles)
-#     tagged_sent = pos_tag(text.split())
-#     properNames = [word for word,pos in tagged_sent if pos == 'NNP']
-#     return properNames
-
-# Sin uso
-# def orderByMonthYear(listN, field):
-#     dicc = {}
-#     for elem in listN:
-#         if elem['fecha'].strftime("%Y-%m") in dicc:
-#             dicc[elem['fecha'].strftime("%Y-%m")] += [elem[field]]
-#         else:
-#             dicc[elem['fecha'].strftime("%Y-%m")] = [elem[field]]
-#     return dicc
-
-# def getStatistics(fromDate, toDate, newspaperSelected):
-    # news = models.getNewsByRangeDate(fromDate, toDate, newspaperSelected)
-    # # news = models.getNews(newspaperSelected)
-    # language = models.getLenguageOfNewspaper(newspaperSelected)[0]['idioma']
-    # listSorted = orderByMonthYear(news, 'noticia')
-    # listCommon = []
-    # start_time = time.time()
-    
-    # for k, v in listSorted.items():
-    #     listCommon.append({k: FreqDist(cleanText(v, language)).most_common(3)})
-
-    # elapsed_time = time.time() - start_time
-    # print('Tiempo ejecución:', elapsed_time, 'segundos')
-    
-    # return listCommon
-
-# def vote(request, question_id):
-#     question = get_object_or_404(Question, pk=question_id)
-#     try:
-#         selected_choice = question.choice_set.get(pk=request.POST['choice'])
-#     except (KeyError, Choice.DoesNotExist):
-#         # Redisplay the question voting form.
-#         return render(request, 'newspapers/detail.html', {
-#             'question': question,
-#             'error_message': "You didn't select a choice.",
-#         })
-#     else:
-#         selected_choice.votes += 1
-#         selected_choice.save()
-#         # Always return an HttpResponseRedirect after successfully dealing
-#         # with POST data. This prevents data from being posted twice if a
-#         # user hits the Back button.
-#         return HttpResponseRedirect(reverse('newspapers:results', args=(question.id,)))
