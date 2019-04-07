@@ -21,17 +21,18 @@
 
 <body>
     {% comment %} Header informativo {% endcomment %}
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-lg-12">
-            <ol class="breadcrumb">
-                <li class="active">
+            <ul class="list-group">
+                <li class="list-group-item list-group-item-light">
                     <small>Estadísticas del periodico:
                         <strong>{{ nombrePeriodico | capfirst }}</strong> desde el
                         <strong>{{ rangoDesde }}</strong> hasta el
-                        <strong>{{ rangoHasta }}</strong>
-                    </small>
+                        <strong>{{ rangoHasta }}</strong>         
+                    </small><br>
+                    <small>Procesado en: {{ timeProcess }} segundos.</small>
                 </li>
-            </ol>
+            </ul>
         </div>
     </div>
     <div class="container-fluid">
@@ -41,7 +42,8 @@
                 <div class="card">
                     <h5 class="card-header">Detalles</h5>
                     <div class="card-body">
-                        <p><strong>Total palabras (articulos):</strong> {{ numeroPalabrasNoticia }}</p>        
+                        <p><strong>Total palabras (articulos):</strong> {{ numeroPalabrasNoticia }}</p>  
+                        <p><strong>Total palabras (articulos procesados):</strong> {{ numeroPalabrasNoticiaProcesada }}</p>  
                         <p><strong>Total palabras (titulos):</strong> {{ numeroPalabrasTitulo }}</p>           
                         <p><strong>Número de noticias:</strong> {{ numeroNoticias }}</p>
                     </div>

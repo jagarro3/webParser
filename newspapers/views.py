@@ -22,6 +22,7 @@ from bokeh.plotting import figure, output_file, show
 from bokeh.embed import components
 from collections import OrderedDict
 from newspapers import models
+from timeit import default_timer as timer
 
 # Stopworks
 stop_wordsEN = stopwords.words('english')
@@ -49,6 +50,8 @@ class ResultsView(generic.DetailView):
     template_name = 'newspapers/results.html'
 
 def getResults(request):
+    start = timer()
+
     template = loader.get_template('newspapers/results.html')
     
     # Obtener datos index.html
@@ -62,19 +65,27 @@ def getResults(request):
 
     # Lista de articulos con el texto en bruto
     articlesRaw = getArticlesRaw(fromDate, toDate, categories, selectNewspaper)
-    
-    # Lista de noticias con el texto limpio
-    articlesCleaned = cleanArticles(articlesRaw, 'noticia', language)
 
-    numWordsText, numWordsTitle, countArticles = getRawData(articlesRaw)
-    imageWordCloud = getWordCloud(articlesCleaned)
-    imageWordCloudBigrams = getWordCloudBigrams(articlesCleaned)
+    # Limpiar la noticia y añadirla a cada element del diccionario
+    for article in articlesRaw:
+        article['noticiaProcesada'] = cleanArticle(article['noticia'], language)
 
-    scriptFrequency, divFrequency = graphFrequency(articlesCleaned)
+    # Obtener información básica de los datos
+    numWordsText, numWordsTextCleaned, numWordsTitle, countArticles = getRawInfoOfData(articlesRaw)
+
+    # Gráficas de wordCloud
+    imageWordCloud = getWordCloud(articlesRaw)
+    imageWordCloudBigrams = getWordCloudBigrams(articlesRaw)
+
+    # Gráfica de barras
+    scriptFrequency, divFrequency = graphFrequency(articlesRaw)
 
     # Gráfica con la palabra mas frecuente en cada fecha
     diccDateArticles = orderByMonthYear(articlesRaw, 'noticia', language)
     mostFrequenceWordPerDay = frequencyByDate(diccDateArticles)
+
+    end = timer()
+    timeProcess = end - start
 
     context = {
         # 'periodicoSeleccionado':  getStatistics(fromDate, toDate, selectNewspaper),
@@ -82,6 +93,7 @@ def getResults(request):
         'rangoDesde': fromDate,
         'rangoHasta': toDate,
         'numeroPalabrasNoticia': numWordsText,
+        'numeroPalabrasNoticiaProcesada': numWordsTextCleaned,
         'numeroPalabrasTitulo': numWordsTitle,
         'numeroNoticias': countArticles,
         'imagenWordCloud': imageWordCloud,
@@ -89,16 +101,17 @@ def getResults(request):
         'divFrequency': divFrequency,
         'scriptFrequency': scriptFrequency,
         'mostFrequenceWordPerDay': mostFrequenceWordPerDay,
-        'articlesRaw': articlesRaw
+        'articlesRaw': articlesRaw,
+        'timeProcess': timeProcess
     }
-
+    
     return HttpResponse(template.render(context, request))
 
 def getWordCloudBigrams(articles):
     bigrams = []
     for article in articles:
-        bigrams.append(list(nltk.bigrams(article)))
-
+        bigrams.append(list(nltk.bigrams(article['noticiaProcesada'])))
+    
     bigrams = [item for sublist in bigrams for item in sublist]  
     bigrams = [" ".join(tup) for tup in bigrams]
   
@@ -114,7 +127,7 @@ def getWordCloudBigrams(articles):
 
 # Obtener imagen WordCloud
 def getWordCloud(articles):
-    articles = [item for sublist in articles for item in sublist]  
+    articles = [item for article in articles for item in article['noticiaProcesada']]  
     fdist = FreqDist(articles)
     wordcloud = WordCloud(background_color="white", width=1920, height=1080).fit_words(fdist)
     my_path = os.path.abspath(os.path.dirname(__file__))
@@ -124,7 +137,7 @@ def getWordCloud(articles):
 
 # Obtener grafico de barras con las palabras mas frecuentes
 def graphFrequency(articles):
-    articles = [item for sublist in articles for item in sublist]  
+    articles = [item for article in articles for item in article['noticiaProcesada']]  
     fdist = FreqDist(articles)
     most_common = fdist.most_common(5)
 
@@ -146,23 +159,23 @@ def frequencyByDate(dicc):
     diccPerDay = {}
 
     for key, val in dicc.items():
-        text = [item for sublist in val for item in sublist]  
-        fdist = FreqDist(text)
+        fdist = FreqDist(val)
         word, count = fdist.most_common(1)[0]
         diccPerDay[key] = word + ' (' +  str(count) + ')'
     
     return diccPerDay
 
 # Obtener datos en crudo
-def getRawData(articles):
-    countWordsText, countWordsTitle, countArticles  = 0, 0, 0
+def getRawInfoOfData(articles):
+    countWordsText, countWordsTextCleaned, countWordsTitle, countArticles  = 0, 0, 0, 0
 
     for x in articles:
         countWordsText += len(x['noticia'].split())
+        countWordsTextCleaned += len(x['noticiaProcesada'])
         countWordsTitle += len(x['titulo'].split())
         countArticles += 1
 
-    return countWordsText, countWordsTitle, countArticles
+    return countWordsText, countWordsTextCleaned, countWordsTitle, countArticles
 
 # Obtener las noticias sin limpiar
 def getArticlesRaw(fromDate, toDate, categories, selectNewspaper):
@@ -171,12 +184,12 @@ def getArticlesRaw(fromDate, toDate, categories, selectNewspaper):
 
     for article in articles:
         tags = ','.join(article['tags'])        
-
-        if any(unicodedata.normalize('NFKD', word.lower()).encode('ASCII', 'ignore').decode() 
+        # print(tags)
+        if all(unicodedata.normalize('NFKD', word.lower()).encode('ASCII', 'ignore').decode() 
         in unicodedata.normalize('NFKD', tags.lower()).encode('ASCII', 'ignore').decode() 
         for word in categories):
             articlesFiltered.append(article)
-    
+    print(articlesFiltered)
     return articlesFiltered
 
 # Diccionario con noticias por fecha
@@ -185,45 +198,27 @@ def orderByMonthYear(listN, field, language):
 
     for elem in listN:
         if elem['fecha'].strftime("%d-%m-%Y") in dicc:
-            dicc[elem['fecha'].strftime("%d-%m-%Y")] += cleanArticle(elem['noticia'], language)
+            dicc[elem['fecha'].strftime("%d-%m-%Y")] += elem['noticiaProcesada']
         else:
-            dicc[elem['fecha'].strftime("%d-%m-%Y")] = cleanArticle(elem['noticia'], language)
-            
+            dicc[elem['fecha'].strftime("%d-%m-%Y")] = elem['noticiaProcesada']
+    
     return dicc
-
-# Noticias con el texto limpio
-def cleanArticles(articles, field, language):
-    tokens, wordsStopWords = [], []
-    
-    # Tokenizar
-    for article in articles:
-        tokens.append(toktok.tokenize(article[field]))
-    
-    for article in tokens:
-        # Minusculas y no numerico/signos
-        wordsUnsigned = [word.lower() for word in article if word.isalpha()]             
-        # Stopworks
-        if language == 'ingles':
-            wordsStopWords.append([word for word in wordsUnsigned if word not in stop_wordsEN])
-        else:
-            wordsStopWords.append([word for word in wordsUnsigned if word not in stop_wordsES])
-
-    return wordsStopWords
 
 # Limpiar el texto de una sola noticia
 def cleanArticle(article, language):
+
     tokens, wordsStopWords = [], []
     
     # Tokenizar
-    tokens.append(toktok.tokenize(article))
-    
-    for article in tokens:
-        # Minusculas y no numerico/signos
-        wordsUnsigned = [word.lower() for word in article if word.isalpha()]             
-        # Stopworks
-        if language == 'ingles':
-            wordsStopWords.append([word for word in wordsUnsigned if word not in stop_wordsEN])
-        else:
-            wordsStopWords.append([word for word in wordsUnsigned if word not in stop_wordsES])
+    tokens = toktok.tokenize(article)
 
+    # Minusculas y no numerico/signos
+    wordsUnsigned = [word.lower() for word in tokens if word.isalpha()]   
+
+    # Stopworks
+    if language == 'ingles':
+        wordsStopWords = [word for word in wordsUnsigned if word not in stop_wordsEN]
+    else:
+        wordsStopWords = [word for word in wordsUnsigned if word not in stop_wordsES]
+      
     return wordsStopWords
