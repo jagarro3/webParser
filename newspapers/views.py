@@ -58,7 +58,7 @@ def getResults(request):
     selectNewspaper = request.POST['selectOfNewspapers']
     fromDate = request.POST['daterange'].split('-')[0]
     toDate = request.POST['daterange'].split('-')[1]
-    categories = [category for category in request.POST['categories'].split(',')]
+    categories = [category.strip() for category in request.POST['categories'].split(',')]
     
     # Obtener idioma del periodico
     language = models.getLenguageOfNewspaper(selectNewspaper)[0]['idioma']
@@ -181,15 +181,15 @@ def getRawInfoOfData(articles):
 def getArticlesRaw(fromDate, toDate, categories, selectNewspaper):
     articles = models.getNewsByRangeDate(fromDate, toDate, selectNewspaper)
     articlesFiltered = []
-
+    
     for article in articles:
-        tags = ','.join(article['tags'])        
-        # print(tags)
+        tags = ','.join(article['tags'])
+
         if all(unicodedata.normalize('NFKD', word.lower()).encode('ASCII', 'ignore').decode() 
         in unicodedata.normalize('NFKD', tags.lower()).encode('ASCII', 'ignore').decode() 
         for word in categories):
             articlesFiltered.append(article)
-    print(articlesFiltered)
+
     return articlesFiltered
 
 # Diccionario con noticias por fecha
