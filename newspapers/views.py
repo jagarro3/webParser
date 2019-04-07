@@ -157,11 +157,12 @@ def graphFrequency(articles):
 # Obtener grafico de barras con la palabra mas frecuente de cada día
 def frequencyByDate(dicc):
     diccPerDay = {}
-
+    
     for key, val in dicc.items():
         fdist = FreqDist(val)
-        word, count = fdist.most_common(1)[0]
-        diccPerDay[key] = word + ' (' +  str(count) + ')'
+        if len(fdist.most_common(1)) > 0:
+            word, count = fdist.most_common(1)[0]
+            diccPerDay[key] = word + ' (' +  str(count) + ')'
     
     return diccPerDay
 
