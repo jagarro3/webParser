@@ -6,233 +6,128 @@
     <meta charset="UTF-8">
     <title>Resultados</title>
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+  
+    {% comment %} <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css"> {% endcomment %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  
+    <!-- Graficos bokeh -->
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-1.0.0.min.css" rel="stylesheet" type="text/css">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-1.0.0.min.css" rel="stylesheet" type="text/css">
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-1.0.0.min.js"></script>
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-1.0.0.min.js"></script>
 </head>
+{{ scriptFrequency | safe }}
 
-<body style="text-align: center;">
-    {% block content %}
-    <div class="col-sm-12 col-lg-12 main">
-        <div class="row">
-            <ol class="breadcrumb">
-                <li class="active">
-                    <span>
-                        Estadísticas del periodico:
-                        <strong>{{ nombrePeriodico }} </strong>
-                        desde el
+<body>
+    {% comment %} Header informativo {% endcomment %}
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <ul class="list-group">
+                <li class="list-group-item list-group-item-light">
+                    <small>Estadísticas del periodico:
+                        <strong>{{ nombrePeriodico | capfirst }}</strong> desde el
                         <strong>{{ rangoDesde }}</strong> hasta el
-                        <strong>{{ rangoHasta }}</strong>
-                    </span>
+                        <strong>{{ rangoHasta }}</strong>         
+                    </small><br>
+                    <small>Procesado en: {{ timeProcess }} segundos.</small>
                 </li>
-            </ol>
-        </div>
-
-        <!-- Datos en crudo -->
-        <div class="row">
-            <div class="col-md-12">
-                <h1 class="page-header">Datos en crudo</h1>
-            </div>
-            <div class="col-md-12">
-                <span><strong>Total palabras (articulos):</strong> {{ numeroPalabrasNoticia }}</span><br>
-                <span><strong>Total palabras (titulos):</strong> {{ numeroPalabrasTitulo }}</span><br>
-                <span><strong>Número de noticias:</strong> {{ numeroNoticias }}</span>
-                
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Word Cloud
-                        <ul class="pull-right panel-settings panel-button-tab-right">
-                            <li class="dropdown">
-                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <em class="fa fa-cogs"></em>
-                                </a>
-                            </li>
-                        </ul>
-                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
-                            <em class="fa fa-toggle-up"></em>
-                        </span>
-                    </div>
-                    <div class="panel-body">
-                        {{ div1 | safe }}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Frecuencia de palabras
-                        <ul class="pull-right panel-settings panel-button-tab-right">
-                            <li class="dropdown">
-                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <em class="fa fa-cogs"></em>
-                                </a>
-                            </li>
-                        </ul>
-                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
-                            <em class="fa fa-toggle-up"></em>
-                        </span>
-                    </div>
-                    <div class="panel-body">
-
-                        {{ div2 | safe }}
-
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Idioma
-                        <ul class="pull-right panel-settings panel-button-tab-right">
-                            <li class="dropdown">
-                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <em class="fa fa-cogs"></em>
-                                </a>
-                            </li>
-                        </ul>
-                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
-                            <em class="fa fa-toggle-up"></em>
-                        </span>
-                    </div>
-                    <div class="panel-body">
-
-                        <img src="http://127.0.0.1:8000/static/{{ image2 }}" alt="frecuencias de idiomas">
-
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Análisis de sentimiento
-                        <ul class="pull-right panel-settings panel-button-tab-right">
-                            <li class="dropdown">
-                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <em class="fa fa-cogs"></em>
-                                </a>
-                            </li>
-                        </ul>
-                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
-                            <em class="fa fa-toggle-up"></em>
-                        </span>
-                    </div>
-                    <div class="panel-body">
-                        <img src="http://127.0.0.1:8000/static/{{ pieSentimental }}" alt="sentimental">
-
-
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6" style="height:500px ; width: 100%">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Polaridad de las palabras
-                        <ul class="pull-right panel-settings panel-button-tab-right">
-                            <li class="dropdown">
-                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <em class="fa fa-cogs"></em>
-                                </a>
-                            </li>
-                        </ul>
-                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
-                            <em class="fa fa-toggle-up"></em>
-                        </span>
-                    </div>
-                    <div class="panel-body" style="height: 400px;">
-                        <!--<img src="http://127.0.0.1:8000/static/{{ image }}"  alt="sentimental"> -->
-                        <!--<div w3-include-html="http://127.0.0.1:8000/static/table.html"></div> -->
-                        <iframe style="border: none;height: 370px;width: 100%" src="http://127.0.0.1:8000/static/table.html" seamless></iframe>
-
-
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6" style="width: 100%">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Actividad a lo largo del tiempo
-                        <ul class="pull-right panel-settings panel-button-tab-right">
-                            <li class="dropdown">
-                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <em class="fa fa-cogs"></em>
-                                </a>
-                            </li>
-                        </ul>
-                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
-                            <em class="fa fa-toggle-up"></em>
-                        </span>
-                    </div>
-                    <div id="vis3" class="panel-body">
-
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Word Cloud
-                        <ul class="pull-right panel-settings panel-button-tab-right">
-                            <li class="dropdown">
-                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <em class="fa fa-cogs"></em>
-                                </a>
-                            </li>
-                        </ul>
-                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
-                            <em class="fa fa-toggle-up"></em>
-                        </span>
-                    </div>
-                    <img style="height: 300px;width: 512px" src="http://127.0.0.1:8000/static/{{ image3 }}" alt="wordcloud">
-
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Regiones activas
-                        <ul class="pull-right panel-settings panel-button-tab-right">
-                            <li class="dropdown">
-                                <a class="pull-right dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <em class="fa fa-cogs"></em>
-                                </a>
-                            </li>
-                        </ul>
-                        <span class="pull-right clickable panel-toggle panel-button-tab-left">
-                            <em class="fa fa-toggle-up"></em>
-                        </span>
-                    </div>
-                    {{ div3 | safe }}
-
-                </div>
-            </div>
+            </ul>
         </div>
     </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <p class="back-link">
-                <a href="https://www.medialoot.com">Health Analytics</a>
-            </p>
+    <div class="container-fluid">
+        {% comment %} Datos en crudo {% endcomment %}
+        <div class="row mb-4">
+            <div class="col-lg-12">
+                <div class="card">
+                    <h5 class="card-header">Detalles</h5>
+                    <div class="card-body">
+                        <p><strong>Total palabras (articulos):</strong> {{ numeroPalabrasNoticia }}</p>  
+                        <p><strong>Total palabras (articulos procesados):</strong> {{ numeroPalabrasNoticiaProcesada }}</p>  
+                        <p><strong>Total palabras (titulos):</strong> {{ numeroPalabrasTitulo }}</p>           
+                        <p><strong>Número de noticias:</strong> {{ numeroNoticias }}</p>
+                    </div>
+                </div>
+            </div>
+        </div> 
+        {% comment %} Gráficas {% endcomment %} 
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <h5 class="card-header">Word Cloud</h5>
+                    <div class="card-body text-center">
+                        <img style="height: 300px; width: 512px" src="../../static/img/wordcloud.jpg" alt="wordcloud">
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <h5 class="card-header"> Frecuencia de palabras</h5>
+                    <div class="card-body text-center">
+                        {{ divFrequency | safe }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <h5 class="card-header">Word Cloud Bigramas</h5>
+                    <div class="card-body text-center">
+                        <img style="height: 300px; width: 512px" src="../../static/img/wordcloudBigrams.jpg" alt="wordcloud">
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <h5 class="card-header">Palabra mas frecuente por fecha</h5>
+                    <div class="card-body" style="overflow-y: scroll; height: 340px;">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col">Fecha</th>
+                                <th scope="col">Palabra</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for key, value in mostFrequenceWordPerDay.items %}
+                                <tr>
+                                    <td>{{ key }}</td>
+                                    <td>{{ value }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
         </div>
+        {% comment %} Listado de noticias {% endcomment %} 
+        <div class="row mb-4">
+            <div class="col-lg-12">
+                <div class="card">
+                    <h5 class="card-header">Listado de noticias</h5>
+                    <div class="card-body">
+                    <div class="list-group">
+                        {% for article in articlesRaw %}                
+                            <li class="list-group-item flex-column align-items-start">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ article.titulo }}</h5>
+                                <small class="text-muted">{{ article.fecha }}</small>
+                            </div>
+                            <p class="mb-1"><small>{{ article.noticia }}</small></p>
+                            <p><small>Categorías: 
+                                {% for tag in article.tags %}
+                                    <em>{{ tag }} </em> 
+                                {% endfor %}
+                            </small>
+                            </p>
+                            <small class="text-muted">{{ article.link }}</small>
+                            </li>
+                        {% endfor %}
+                    </div>           
+                    </div>
+                </div>
+            </div>
+        </div>                  
     </div>
-    <!--/.row-->
-    </div>
-    <!--/.main-->
-
-    {% endblock %}
-    <!-- <br>
-    {% for o in periodicoSeleccionado %}
-    <span>{{ o }}</span>
-    <br> {% endfor %} -->
-
-
 </body>
-
 </html>
