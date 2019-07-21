@@ -23,6 +23,8 @@ from nltk.corpus import stopwords
 from nltk.tag import pos_tag
 from nltk.tokenize import ToktokTokenizer, sent_tokenize, word_tokenize
 from wordcloud import WordCloud
+from unidecode import unidecode
+import unicodedata
 
 from newspapers import models
 
@@ -73,14 +75,19 @@ def getResults(request):
     print("--- %s getArticlesRaw ---" % (time.time() - start_time))
 
     # Limpiar la noticia y añadirla a cada element del diccionario
+    # start_time = time.time()
+    # for article in articlesRaw:
+    #     article['noticiaProcesada'] = cleanArticle(article['noticia'], language)
+    # print("--- %s cleanArticle ---" % (time.time() - start_time))
     start_time = time.time()
     for article in articlesRaw:
-        article['noticiaProcesada'] = cleanArticle(article['noticia'], language)
-    print("--- %s cleanArticle ---" % (time.time() - start_time))
+        article['noticiaProcesada'] = cleanArticleV2(article['noticia'], language)
+    print("--- %s cleanArticleV2 ---" % (time.time() - start_time))
 
     # Obtener información básica de los datos
     start_time = time.time()
     numWordsText, numWordsTextCleaned, numWordsTitle, countArticles = getRawInfoOfData(articlesRaw)
+    numWordsRemoved = numWordsText - numWordsTextCleaned
     print("--- %s getRawInfoOfData ---" % (time.time() - start_time))
 
     # Gráficas de wordCloud
@@ -121,6 +128,7 @@ def getResults(request):
         'numeroPalabrasNoticiaProcesada': numWordsTextCleaned,
         'numeroPalabrasTitulo': numWordsTitle,
         'numeroNoticias': countArticles,
+        'numeroPalabrasEliminadas': numWordsRemoved,
         'imagenWordCloud': imageWordCloud,
         'imagenWordCloudBigrams': imageWordCloudBigrams,
         'divFrequency': divFrequency,
@@ -143,7 +151,7 @@ def getWordCloudBigrams(articles):
   
     fdist = FreqDist(bigrams)
 
-    wordcloud = WordCloud(background_color="white").fit_words(fdist)
+    wordcloud = WordCloud(background_color="white", max_words=50).fit_words(fdist)
     
     my_path = os.path.abspath(os.path.dirname(__file__))
     path = os.path.join(my_path, "./static/img/wordcloudBigrams.jpg")
@@ -155,7 +163,7 @@ def getWordCloudBigrams(articles):
 def getWordCloud(articles):
     articles = [item for article in articles for item in article['noticiaProcesada']]  
     fdist = FreqDist(articles)
-    wordcloud = WordCloud(background_color="white").fit_words(fdist)
+    wordcloud = WordCloud(background_color="white", max_words=50).fit_words(fdist)
     my_path = os.path.abspath(os.path.dirname(__file__))
     path = os.path.join(my_path, "./static/img/wordcloud.jpg")
     wordcloud.to_file(path)
@@ -261,4 +269,24 @@ def cleanArticle(article, language):
     else:
         wordsStopWords = [word for word in wordsUnsigned if word not in stop_wordsES]
       
+    return wordsStopWords
+
+# Limpiar el texto de una sola noticia de forma más efectiva
+def cleanArticleV2(article, language):
+    tokens, wordsStopWords = [], []
+
+    article = article.replace('ñ', 'ny')
+    no_accents = unicodedata.normalize('NFD', article.lower()).encode('ascii', 'ignore').decode("utf-8")
+
+    result = re.sub('[^A-Za-z]+', ' ', no_accents)
+    result = re.sub(r'\b\w{1,2}\b', '', result)
+  
+    # Tokenizar
+    tokens = toktok.tokenize(result)
+
+    # # Stopworks
+    if language == 'ingles':
+        wordsStopWords = [word for word in tokens if word not in stop_wordsEN]
+    else:
+        wordsStopWords = [word for word in tokens if word not in stop_wordsES]
     return wordsStopWords
