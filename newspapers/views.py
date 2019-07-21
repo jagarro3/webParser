@@ -23,6 +23,7 @@ from bokeh.embed import components
 from collections import OrderedDict
 from newspapers import models
 from timeit import default_timer as timer
+import time
 
 # Stopworks
 stop_wordsEN = stopwords.words('english')
@@ -61,28 +62,48 @@ def getResults(request):
     categories = [category.strip() for category in request.POST['categories'].split(',')]
     
     # Obtener idioma del periodico
+    start_time = time.time()
     language = models.getLenguageOfNewspaper(selectNewspaper)[0]['idioma']
+    print("--- %s getLenguageOfNewspaper ---" % (time.time() - start_time))
 
     # Lista de articulos con el texto en bruto
+    start_time = time.time()
     articlesRaw = getArticlesRaw(fromDate, toDate, categories, selectNewspaper)
+    print("--- %s getArticlesRaw ---" % (time.time() - start_time))
 
     # Limpiar la noticia y añadirla a cada element del diccionario
+    start_time = time.time()
     for article in articlesRaw:
         article['noticiaProcesada'] = cleanArticle(article['noticia'], language)
+    print("--- %s cleanArticle ---" % (time.time() - start_time))
 
     # Obtener información básica de los datos
+    start_time = time.time()
     numWordsText, numWordsTextCleaned, numWordsTitle, countArticles = getRawInfoOfData(articlesRaw)
+    print("--- %s getRawInfoOfData ---" % (time.time() - start_time))
 
     # Gráficas de wordCloud
+    start_time = time.time()
     imageWordCloud = getWordCloud(articlesRaw)
+    print("--- %s getWordCloud ---" % (time.time() - start_time))
+
+    start_time = time.time()
     imageWordCloudBigrams = getWordCloudBigrams(articlesRaw)
+    print("--- %s getWordCloudBigrams ---" % (time.time() - start_time))
 
     # Gráfica de barras
+    start_time = time.time()
     scriptFrequency, divFrequency = graphFrequency(articlesRaw)
+    print("--- %s graphFrequency ---" % (time.time() - start_time))
 
     # Gráfica con la palabra mas frecuente en cada fecha
+    start_time = time.time()
     diccDateArticles = orderByMonthYear(articlesRaw, 'noticia', language)
+    print("--- %s orderByMonthYear ---" % (time.time() - start_time))
+
+    start_time = time.time()
     mostFrequenceWordPerDay = frequencyByDate(diccDateArticles)
+    print("--- %s graphFrequency ---" % (time.time() - start_time))
 
     end = timer()
     timeProcess = end - start
@@ -117,7 +138,7 @@ def getWordCloudBigrams(articles):
   
     fdist = FreqDist(bigrams)
 
-    wordcloud = WordCloud(background_color="white", width=1920, height=1080).fit_words(fdist)
+    wordcloud = WordCloud(background_color="white").fit_words(fdist)
     
     my_path = os.path.abspath(os.path.dirname(__file__))
     path = os.path.join(my_path, "./static/img/wordcloudBigrams.jpg")
@@ -129,7 +150,7 @@ def getWordCloudBigrams(articles):
 def getWordCloud(articles):
     articles = [item for article in articles for item in article['noticiaProcesada']]  
     fdist = FreqDist(articles)
-    wordcloud = WordCloud(background_color="white", width=1920, height=1080).fit_words(fdist)
+    wordcloud = WordCloud(background_color="white").fit_words(fdist)
     my_path = os.path.abspath(os.path.dirname(__file__))
     path = os.path.join(my_path, "./static/img/wordcloud.jpg")
     wordcloud.to_file(path)
