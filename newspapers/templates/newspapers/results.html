@@ -30,6 +30,12 @@
                         <strong>{{ rangoDesde }}</strong> hasta el
                         <strong>{{ rangoHasta }}</strong>         
                     </small><br>
+                    {% if palabrasFiltradas != "" %} 
+                    <small>Palabras filtradas: {{ palabrasFiltradas }}</small><br>
+                     {% endif %}
+                    {% if categoriasFiltradas != "" %} 
+                    <small ng-if="categoriasFiltradas != ''">Categorías filtradas: {{ categoriasFiltradas }}</small><br>
+                    {% endif %}
                     <small>Procesado en: {{ timeProcess }} segundos.</small>
                 </li>
             </ul>
@@ -45,7 +51,7 @@
                         <p><strong>Total palabras (articulos sin procesar):</strong> {{ numeroPalabrasNoticia }}</p>  
                         <p><strong>Total palabras (articulos procesados):</strong> {{ numeroPalabrasNoticiaProcesada }}</p>  
                         <p><strong>Total palabras (titulos sin procesar):</strong> {{ numeroPalabrasTitulo }}</p>           
-                        <p><strong>Total palabras eliminadas:</strong> {{ numeroPalabrasEliminadas }}</p>  
+                        <p><strong>Total palabras eliminadas:</strong> {{ numeroPalabrasEliminadas }}</p>
                         <p><strong>Número de noticias:</strong> {{ numeroNoticias }}</p>
                     </div>
                 </div>

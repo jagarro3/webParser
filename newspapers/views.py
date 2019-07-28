@@ -49,7 +49,6 @@ class IndexView(generic.ListView):
         newspapers = models.getNewspapers()
         return newspapers
 
-
 class ResultsView(generic.DetailView):
     template_name = 'newspapers/results.html'
 
@@ -63,6 +62,8 @@ def getResults(request):
     fromDate = request.POST['daterange'].split('-')[0]
     toDate = request.POST['daterange'].split('-')[1]
     categories = [category.strip() for category in request.POST['categories'].split(',')]
+    wordsSearch = [word.strip() for word in request.POST['wordsSearch'].split(',')]
+    optAndOr = request.POST['optAndOr']
     
     # Obtener idioma del periodico
     start_time = time.time()
@@ -71,14 +72,10 @@ def getResults(request):
 
     # Lista de articulos con el texto en bruto
     start_time = time.time()
-    articlesRaw = getArticlesRaw(fromDate, toDate, categories, selectNewspaper)
-    print("--- %s getArticlesRaw ---" % (time.time() - start_time))
+    articlesRaw = getArticlesRawV2(fromDate, toDate, categories, wordsSearch, optAndOr, selectNewspaper)
+    print("--- %s getArticlesRawV2 ---" % (time.time() - start_time))
 
     # Limpiar la noticia y añadirla a cada element del diccionario
-    # start_time = time.time()
-    # for article in articlesRaw:
-    #     article['noticiaProcesada'] = cleanArticle(article['noticia'], language)
-    # print("--- %s cleanArticle ---" % (time.time() - start_time))
     start_time = time.time()
     for article in articlesRaw:
         article['noticiaProcesada'] = cleanArticleV2(article['noticia'], language)
@@ -124,6 +121,8 @@ def getResults(request):
         'nombrePeriodico': selectNewspaper,
         'rangoDesde': fromDate,
         'rangoHasta': toDate,
+        'palabrasFiltradas': ', '.join(wordsSearch),
+        'categoriasFiltradas': ', '.join(categories),
         'numeroPalabrasNoticia': numWordsText,
         'numeroPalabrasNoticiaProcesada': numWordsTextCleaned,
         'numeroPalabrasTitulo': numWordsTitle,
@@ -141,33 +140,80 @@ def getResults(request):
     
     return HttpResponse(template.render(context, request))
 
-def getWordCloudBigrams(articles):
-    bigrams = []
+# Obtener las noticias sin limpiar
+def getArticlesRaw(fromDate, toDate, categories, selectNewspaper):
+    articles = models.getNewsByRangeDate(fromDate, toDate, selectNewspaper)
+    articlesFiltered = []
+    
     for article in articles:
-        bigrams.append(list(nltk.bigrams(article['noticiaProcesada'])))
-    
-    bigrams = [item for sublist in bigrams for item in sublist]  
-    bigrams = [" ".join(tup) for tup in bigrams]
-  
-    fdist = FreqDist(bigrams)
+        tags = ','.join(article['tags'])
 
-    wordcloud = WordCloud(background_color="white", max_words=50).fit_words(fdist)
-    
-    my_path = os.path.abspath(os.path.dirname(__file__))
-    path = os.path.join(my_path, "./static/img/wordcloudBigrams.jpg")
-    wordcloud.to_file(path)
+        if all(unicodedata.normalize('NFKD', word.lower()).encode('ASCII', 'ignore').decode() 
+        in unicodedata.normalize('NFKD', tags.lower()).encode('ASCII', 'ignore').decode() 
+        for word in categories):
+            articlesFiltered.append(article)
 
-    return ('wordcloudBigrams.jpg')
+    return articlesFiltered
+
+def getArticlesRawV2(fromDate, toDate, categories, wordsSearch, optAndOr, selectNewspaper):
+    articles = models.getNewsByRangeDate(fromDate, toDate, selectNewspaper)
+    articlesFiltered = []
+
+    for article in articles:
+        tags = [tag.lower() for tag in article['tags']]
+        if optAndOr == "and":
+            if all(True if article['noticia'].lower().find(word.lower()) > -1 else False for word in wordsSearch):
+                if all(word.lower() in tags for word in categories):
+                    articlesFiltered.append(article)
+        else:
+            if all(True if article['noticia'].lower().find(word.lower()) > -1 else False for word in wordsSearch) or all(word.lower() in tags for word in categories):
+                articlesFiltered.append(article)
+
+    return articlesFiltered
+
+# Obtener datos en crudo
+def getRawInfoOfData(articles):
+    countWordsText, countWordsTextCleaned, countWordsTitle, countArticles  = 0, 0, 0, 0
+
+    for x in articles:
+        countWordsText += len(x['noticia'].split())
+        countWordsTextCleaned += len(x['noticiaProcesada'])
+        countWordsTitle += len(x['titulo'].split())
+        countArticles += 1
+
+    return countWordsText, countWordsTextCleaned, countWordsTitle, countArticles
 
 # Obtener imagen WordCloud
 def getWordCloud(articles):
-    articles = [item for article in articles for item in article['noticiaProcesada']]  
-    fdist = FreqDist(articles)
-    wordcloud = WordCloud(background_color="white", max_words=50).fit_words(fdist)
-    my_path = os.path.abspath(os.path.dirname(__file__))
-    path = os.path.join(my_path, "./static/img/wordcloud.jpg")
-    wordcloud.to_file(path)
-    return ('wordcloud.jpg')
+    print(len(articles))
+    if len(articles) > 0:
+        print("ENTRA")
+        articles = [item for article in articles for item in article['noticiaProcesada']]  
+        fdist = FreqDist(articles)
+        wordcloud = WordCloud(background_color="white", max_words=50).fit_words(fdist)
+        my_path = os.path.abspath(os.path.dirname(__file__))
+        path = os.path.join(my_path, "./static/img/wordcloud.jpg")
+        wordcloud.to_file(path)
+        return ('wordcloud.jpg')
+
+def getWordCloudBigrams(articles):
+    if len(articles) > 0:
+        bigrams = []
+        for article in articles:
+            bigrams.append(list(nltk.bigrams(article['noticiaProcesada'])))
+
+        bigrams = [item for sublist in bigrams for item in sublist]  
+        bigrams = [" ".join(tup) for tup in bigrams]
+    
+        fdist = FreqDist(bigrams)
+
+        wordcloud = WordCloud(background_color="white", max_words=50).fit_words(fdist)
+
+        my_path = os.path.abspath(os.path.dirname(__file__))
+        path = os.path.join(my_path, "./static/img/wordcloudBigrams.jpg")
+        wordcloud.to_file(path)
+
+        return ('wordcloudBigrams.jpg')
 
 # Obtener grafico de barras con las palabras mas frecuentes
 def graphFrequency(articles):
@@ -187,6 +233,18 @@ def graphFrequency(articles):
     #Store components 
     scriptFrequency, graphFrequency = components(p)
     return scriptFrequency, graphFrequency
+
+# Diccionario con noticias por fecha
+def orderByMonthYear(listN, field, language):
+    dicc = {}
+
+    for elem in listN:
+        if elem['fecha'].strftime("%d-%m-%Y") in dicc:
+            dicc[elem['fecha'].strftime("%d-%m-%Y")] += elem[field]
+        else:
+            dicc[elem['fecha'].strftime("%d-%m-%Y")] = elem[field]
+    
+    return dicc
 
 # Obtener tabla con la palabra mas frecuente de cada día
 def frequencyWordsByDate(dicc):
@@ -212,45 +270,6 @@ def frequencyBigramsByDate(dicc):
             word, count = fdist.most_common(1)[0]
             diccPerDay[key] = word + ' (' +  str(count) + ')'
     return diccPerDay
-
-# Obtener datos en crudo
-def getRawInfoOfData(articles):
-    countWordsText, countWordsTextCleaned, countWordsTitle, countArticles  = 0, 0, 0, 0
-
-    for x in articles:
-        countWordsText += len(x['noticia'].split())
-        countWordsTextCleaned += len(x['noticiaProcesada'])
-        countWordsTitle += len(x['titulo'].split())
-        countArticles += 1
-
-    return countWordsText, countWordsTextCleaned, countWordsTitle, countArticles
-
-# Obtener las noticias sin limpiar
-def getArticlesRaw(fromDate, toDate, categories, selectNewspaper):
-    articles = models.getNewsByRangeDate(fromDate, toDate, selectNewspaper)
-    articlesFiltered = []
-    
-    for article in articles:
-        tags = ','.join(article['tags'])
-
-        if all(unicodedata.normalize('NFKD', word.lower()).encode('ASCII', 'ignore').decode() 
-        in unicodedata.normalize('NFKD', tags.lower()).encode('ASCII', 'ignore').decode() 
-        for word in categories):
-            articlesFiltered.append(article)
-
-    return articlesFiltered
-
-# Diccionario con noticias por fecha
-def orderByMonthYear(listN, field, language):
-    dicc = {}
-
-    for elem in listN:
-        if elem['fecha'].strftime("%d-%m-%Y") in dicc:
-            dicc[elem['fecha'].strftime("%d-%m-%Y")] += elem[field]
-        else:
-            dicc[elem['fecha'].strftime("%d-%m-%Y")] = elem[field]
-    
-    return dicc
 
 # Limpiar el texto de una sola noticia
 def cleanArticle(article, language):
