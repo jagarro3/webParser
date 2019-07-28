@@ -159,14 +159,34 @@ def getArticlesRawV2(fromDate, toDate, categories, wordsSearch, optAndOr, select
     articles = models.getNewsByRangeDate(fromDate, toDate, selectNewspaper)
     articlesFiltered = []
 
+    # Si no hay filtros aplicados
+    if(len(categories) == 1 and categories[0] == "" and len(wordsSearch) == 1 and wordsSearch[0] == ""):
+        return articles
+
+    # Si hay categorias pero no noticias
+    if(len(categories) > 0 and categories[0] != "" and len(wordsSearch) == 1 and wordsSearch[0] == ""):
+        for article in articles:
+            tags = [tag.lower() for tag in article['tags']]
+            if all(word.lower() in tags for word in categories):
+                articlesFiltered.append(article)
+        return articlesFiltered
+
+    # Si hay noticias pero no caterogorias
+    if(len(categories) == 1 and categories[0] == "" and len(wordsSearch) > 0 and wordsSearch[0] != ""):
+        for article in articles:
+            if all(True if article['noticia'].lower().find(word.lower()) > -1 else False for word in wordsSearch):
+                articlesFiltered.append(article)
+        return articlesFiltered
+
+    # Si están aplicados ambos filtros, entonces entra en juego el operador lógico And y Or
     for article in articles:
         tags = [tag.lower() for tag in article['tags']]
         if optAndOr == "and":
             if all(True if article['noticia'].lower().find(word.lower()) > -1 else False for word in wordsSearch):
                 if all(word.lower() in tags for word in categories):
-                    articlesFiltered.append(article)
+                    articlesFiltered.append(article)           
         else:
-            if all(True if article['noticia'].lower().find(word.lower()) > -1 else False for word in wordsSearch) or all(word.lower() in tags for word in categories):
+            if (all(True if article['noticia'].lower().find(word.lower()) > -1 else False for word in wordsSearch) and len(wordsSearch) > 0) or (all(word.lower() in tags for word in categories) and len(categories) > 0):
                 articlesFiltered.append(article)
 
     return articlesFiltered
