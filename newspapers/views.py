@@ -205,9 +205,7 @@ def getRawInfoOfData(articles):
 
 # Obtener imagen WordCloud
 def getWordCloud(articles):
-    print(len(articles))
     if len(articles) > 0:
-        print("ENTRA")
         articles = [item for article in articles for item in article['noticiaProcesada']]  
         fdist = FreqDist(articles)
         wordcloud = WordCloud(background_color="white", max_words=50).fit_words(fdist)
