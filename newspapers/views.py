@@ -320,7 +320,6 @@ def cleanArticleV2(article, language):
     no_accents = unicodedata.normalize('NFD', article.lower()).encode('ascii', 'ignore').decode("utf-8")
     result = re.sub('[^A-Za-z]+', ' ', no_accents)
     result = re.sub(r'\b\w{1,2}\b', '', result)
-    # result = re.sub(r'\b\w{1,2}\b', '', result)
     
     if language != 'ingles':        
         result = result.replace('ny', 'ñ')
